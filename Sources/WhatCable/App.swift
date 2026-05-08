@@ -43,6 +43,13 @@ struct WhatCableApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowDelegate {
     static let refreshSignal = RefreshSignal()
 
+    private enum Layout {
+        static let windowContentSize = NSSize(width: 760, height: 540)
+        static let popoverHeight: CGFloat = 540
+        static let mainPopoverWidth: CGFloat = 620
+        static let settingsPopoverWidth: CGFloat = 440
+    }
+
     // Menu bar mode
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
@@ -75,6 +82,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
                 self?.applyDisplayMode(menuBar: menuBar)
             }
             .store(in: &cancellables)
+
+        Self.refreshSignal.$showSettings
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] showSettings in
+                self?.updateMenuBarPopoverSize(showingSettings: showSettings)
+            }
+            .store(in: &cancellables)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -103,7 +118,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             let p = NSPopover()
             p.behavior = isPinned ? .applicationDefined : .transient
             p.animates = true
-            p.contentSize = NSSize(width: 760, height: 540)
+            p.contentSize = menuBarPopoverSize(showingSettings: Self.refreshSignal.showSettings)
             p.contentViewController = NSHostingController(
                 rootView: ContentView().environmentObject(Self.refreshSignal)
             )
@@ -142,7 +157,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         let w = NSWindow(contentViewController: host)
         w.title = AppInfo.name
         w.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        w.setContentSize(NSSize(width: 760, height: 540))
+        w.setContentSize(Layout.windowContentSize)
         w.center()
         w.delegate = self
         w.isReleasedWhenClosed = false
@@ -179,9 +194,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             popover.performClose(nil)
         } else {
             Self.refreshSignal.bump()
+            updateMenuBarPopoverSize(showingSettings: Self.refreshSignal.showSettings)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
         }
+    }
+
+    private func menuBarPopoverSize(showingSettings: Bool) -> NSSize {
+        NSSize(
+            width: showingSettings ? Layout.settingsPopoverWidth : Layout.mainPopoverWidth,
+            height: Layout.popoverHeight
+        )
+    }
+
+    private func updateMenuBarPopoverSize(showingSettings: Bool) {
+        popover?.contentSize = menuBarPopoverSize(showingSettings: showingSettings)
     }
 
     private func showMenu(from button: NSStatusBarButton) {
