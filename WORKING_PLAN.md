@@ -1,7 +1,7 @@
 # Working plan: WhatCable
 
 **Source review — 23 September 2026**
-**Observed source:** Gitea `main`, `2959b2204fcade0c85a6aeedb8bf2830958ad2ec`, inspected from the clean HP-Lab clone. A separate Mac checkout at this HEAD has an untracked local `build-local-app.sh`; it was left untouched. This plan does not infer ownership, upstream maintainer status or current release state from the repository snapshot.
+**Observed source:** Gitea `main`, `2959b2204fcade0c85a6aeedb8bf2830958ad2ec`, inspected from the clean Homelab clone. A separate Mac checkout at this HEAD has an untracked local `build-local-app.sh`; it was left untouched. This plan does not infer ownership, upstream maintainer status or current release state from the repository snapshot.
 
 ## Purpose
 
